@@ -39,12 +39,12 @@ async def generate(ctx, *, prompt):
             steps=30,
             use_refiner=False
         )
-        with open(f'output_image_{prompt+str(zufallszahl)}.png', 'wb') as f:
+        with open(f'output_image_{str(zufallszahl)}.png', 'wb') as f:
             f.write(image)
 
         # Upload image to Discord
-        await ctx.send(file=discord.File(f'output_image_{prompt+str(zufallszahl)}.png'))
-        os.remove(f'output_image_{prompt+str(zufallszahl)}.png')  # Remove the file after uploading
+        await ctx.send(file=discord.File(f'output_image_{str(zufallszahl)}.png'))
+        os.remove(f'output_image_{str(zufallszahl)}.png')  # Remove the file after uploading
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
 
@@ -53,18 +53,22 @@ async def voice(ctx, *, prompt):
     print("HI")
     try:
         c = Client("https://openvoice.lepton.run", token=api_token)
+        
+        untere_grenze = 1009774958
+        obere_grenze = 4809774958
+        zufallszahl = random.randint(untere_grenze, obere_grenze)
 
         mpeg=c.run(
             reference_speaker="https://www.lepton.ai/playground/openvoice/inputs/speaker_1.mp3",
             text=prompt,
             emotion="friendly"
         )
-        with open(f'output_image_{prompt}.mp3', 'wb') as f:
+        with open(f'output_image_{zufallszahl}.mp3', 'wb') as f:
             f.write(mpeg)
 
         # Upload image to Discord
-        await ctx.send(file=discord.File(f'output_image_{prompt}.mp3'))
-        os.remove(f'output_image_{prompt}.mp3')  # Remove the file after uploading
+        await ctx.send(file=discord.File(f'output_image_{zufallszahl}.mp3'))
+        os.remove(f'output_image_{zufallszahl}.mp3')  # Remove the file after uploading
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
 
