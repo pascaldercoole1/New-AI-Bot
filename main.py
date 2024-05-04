@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import os
 from leptonai.client import Client
+from keep_alive import keep_alive
 
 # Set up Lepton AI client
 api_token = os.environ.get('api')
@@ -15,6 +16,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
+    keep_alive()
     print(f'Logged in as {bot.user.name}')
 
 @bot.command()
