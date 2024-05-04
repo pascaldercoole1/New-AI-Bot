@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 from leptonai.client import Client
 from keep_alive import keep_alive
+import random
 
 # Set up Lepton AI client
 api_token = os.environ.get('api')
@@ -23,22 +24,27 @@ async def on_ready():
 async def generate(ctx, *, prompt):
     print("HI")
     try:
+
+        untere_grenze = 1009774958
+        obere_grenze = 4809774958
+        zufallszahl = random.randint(untere_grenze, obere_grenze)
+        
         image = lepton_client.run(
             prompt=prompt,
             height=1024,
             width=1024,
             guidance_scale=5,
             high_noise_frac=0.75,
-            seed=1809774958,
+            seed=zufallszahl,
             steps=30,
             use_refiner=False
         )
-        with open(f'output_image_{prompt}.png', 'wb') as f:
+        with open(f'output_image_{prompt+str(zufallszahl)}.png', 'wb') as f:
             f.write(image)
 
         # Upload image to Discord
-        await ctx.send(file=discord.File(f'output_image_{prompt}.png'))
-        os.remove(f'output_image_{prompt}.png')  # Remove the file after uploading
+        await ctx.send(file=discord.File(f'output_image_{prompt+str(zufallszahl)}.png'))
+        os.remove(f'output_image_{prompt+str(zufallszahl)}.png')  # Remove the file after uploading
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
 
