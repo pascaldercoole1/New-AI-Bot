@@ -60,28 +60,5 @@ async def voice(ctx, *, prompt):
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
 
-@bot.command()
-async def generate(ctx, *, prompt):
-    print("HI")
-    try:
-        image = lepton_client.run(
-            prompt=prompt,
-            height=1024,
-            width=1024,
-            guidance_scale=5,
-            high_noise_frac=0.75,
-            seed=1809774958,
-            steps=30,
-            use_refiner=False
-        )
-        with open(f'output_image_{prompt}.png', 'wb') as f:
-            f.write(image)
-
-        # Upload image to Discord
-        await ctx.send(file=discord.File(f'output_image_{prompt}.png'))
-        os.remove(f'output_image_{prompt}.png')  # Remove the file after uploading
-    except Exception as e:
-        await ctx.send(f"An error occurred: {e}")
-
 # Run the bot
 bot.run(os.environ.get("token"))
