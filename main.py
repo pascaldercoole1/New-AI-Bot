@@ -4,6 +4,13 @@ import os
 from leptonai.client import Client
 from keep_alive import keep_alive
 import random
+import time
+import datetime
+
+# Global variables to track statistics
+image_count = 0
+voice_count = 0
+start_time = time.time()
 
 # Set up Lepton AI client
 api_token = os.environ.get('api')
@@ -22,9 +29,8 @@ async def on_ready():
 
 @bot.command()
 async def generate(ctx, *, prompt):
-    print("HI")
+    global image_count
     try:
-
         untere_grenze = 1009774958
         obere_grenze = 4809774958
         zufallszahl = random.randint(untere_grenze, obere_grenze)
@@ -45,12 +51,15 @@ async def generate(ctx, *, prompt):
         # Upload image to Discord
         await ctx.send(file=discord.File(f'output_image_{str(zufallszahl)}.png'))
         os.remove(f'output_image_{str(zufallszahl)}.png')  # Remove the file after uploading
+        
+        # Increment image count
+        image_count += 1
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
 
 @bot.command()
 async def voice(ctx, *, prompt):
-    print("HI")
+    global voice_count
     try:
         c = Client("https://openvoice.lepton.run", token=api_token)
         
@@ -69,8 +78,24 @@ async def voice(ctx, *, prompt):
         # Upload image to Discord
         await ctx.send(file=discord.File(f'output_image_{zufallszahl}.mp3'))
         os.remove(f'output_image_{zufallszahl}.mp3')  # Remove the file after uploading
+        
+        # Increment voice count
+        voice_count += 1
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
+
+@bot.command()
+async def uptime(ctx):
+    global start_time
+    current_time = time.time()
+    uptime_seconds = int(current_time - start_time)
+    uptime_string = str(datetime.timedelta(seconds=uptime_seconds))
+    await ctx.send(f"Uptime: {uptime_string}")
+
+@bot.command()
+async def stats(ctx):
+    global image_count, voice_count
+    await ctx.send(f"Images generated: {image_count}\nVoice files generated: {voice_count}")
 
 # Run the bot
 bot.run(os.environ.get("token"))
