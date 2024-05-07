@@ -3,5 +3,3 @@ leptonai
 requests
 flask
 openai
-asyncio
-pynacl
