@@ -7,6 +7,7 @@ import random
 import time
 import datetime
 import openai
+import requests
 
 image_count = 0
 voice_count = 0
@@ -56,6 +57,112 @@ async def generate(ctx, *, prompt):
         image_count += 1
     except Exception as e:
         print(f"An error occurred: {e}")
+
+@bot.command()
+async def p(ctx, *, prompt):
+    global image_count
+    try:
+        GeneratingImageMessage = await ctx.send(f"Generating Image... :hourglass_flowing_sand:")
+        untere_grenze = 1
+        obere_grenze = 5000000000
+        zufallszahl = random.randint(untere_grenze, obere_grenze)
+
+        url = "https://pornworks.ai/api/v2/generate/text2image"
+
+        def Check(f):
+            url = f"https://pornworks.ai/api/v2/generations/{f}/state"
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
+                "Sec-Fetch-Dest": "empty",
+                "Sec-Fetch-Mode": "no-cors",
+                "Sec-Fetch-Site": "same-origin",
+                "Site": "pornworks",
+                "Currency": "EUR",
+                "cf-auth-token": "eyJ4IjoiL2dlbmVyYXRlO2dlbmVyYXRpb249YTlhYTQyYzQtMWVjNi00NzVlLWFlYmQtNWJkOTk1OGFmZTc2IiwibGciOiJkZSIsImplIjpmYWxzZSwiZGgiOjEwODAsImR3IjoxOTIwLCJjZCI6MjQsInRvIjoiLTEyMCIsInUiOiIzRVE5aWZ2cFYiLCJ6IjoiaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS8ifQ=="
+            }
+
+            response = requests.get(url, headers=headers)
+            print("response:",response.text)
+            state = response.json()["state"]
+            if state == "pending":
+                return {"state":state, "Image":"/"}
+            else:
+                ImageURL = response.json()["results"]["image"]
+                return {"state":state, "Image":"https://pornworks.ai"+str(ImageURL)}
+            
+        cookies = {
+            "user-token": "c4374ccd-6359-419a-a1d3-c59208fce047"
+        }
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
+            "Content-Type": "application/json",
+            "Site": "pornworks",
+            "Currency": "EUR",
+            "cf-auth-token": "eyJ4IjoiL2dlbmVyYXRlO2dlbmVyYXRpb249YTlhYTQyYzQtMWVjNi00NzVlLWFlYmQtNWJkOTk1OGFmZTc2IiwibGciOiJkZSIsImplIjpmYWxzZSwiZGgiOjEwODAsImR3IjoxOTIwLCJjZCI6MjQsInRvIjoiLTEyMCIsInUiOiIzRVE5aWZ2cFYiLCJ6IjoiaHR0cHM6Ly93d3cuZ29vZ2xlLmNvbS8ifQ==",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin"
+        }
+
+        data = {
+            "baseModel": "SD 1.5",
+            "checkpoint": "realistic_v3",
+            "prompt": prompt,
+            "negativePrompt": "High pass filter, airbrush,portrait,zoomed, soft light, smooth skin,closeup, Anime, fake, cartoon, deformed, extra limbs, extra fingers, mutated hands, bad anatomy, bad proportions , blind, bad eyes, ugly eyes, dead eyes, blur, vignette, out of shot, out of focus, gaussian, closeup, monochrome, grainy, noisy, text, writing, watermark, logo, oversaturation , over saturation, over shadow, floating limbs, disconnected limbs, anime, kitsch, cartoon, penis, fake, (black and white), airbrush, drawing, illustration, boring, 3d render, long neck, out of frame, extra fingers, mutated hands, monochrome, ((poorly drawn hands)), ((poorly drawn face)), (((mutation))), (((deformed))), ((ugly)), blurry, ((bad anatomy)), (((bad proportions))), ((extra limbs)), cloned face, glitchy, bokeh, (((long neck))), (child), (childlike), 3D, 3DCG, cgstation, red eyes, multiple subjects, extra heads, close up, man, ((asian)), text, bad anatomy, morphing, messy broken legs decay, ((simple background)), deformed body, lowres, bad anatomy, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low jpeg artifacts, signature, watermark, username, blurry, out of focus, old, amateur drawing, odd, fat, morphing, ((simple background)), artifacts, signature, artist name, [blurry], disfigured, mutated, (poorly hands), messy broken legs, decay, painting, duplicate, closeup",
+            "resources": [],
+            "samplerName": "DPM++ 2M Karras",
+            "size": "512x768",
+            "hr": False,
+            "cfgScale": 5,
+            "performance": "speed",
+            "denoisingStrength": 1,
+            "fast": False,
+            "nsfw": True,
+            "inpaintMode": "checkpoint"
+        }
+
+
+        response = requests.post(url, json=data, headers=headers, cookies=cookies)
+        print("response:",response,response.text)
+        print(response.json())
+        id = response.json()["id"]
+        print("ID:",id)
+        Check(id)
+
+        timealr = 0
+
+        while True:
+            try:
+                status = Check(id)
+                if status["state"] == "done":
+                    print(status["Image"])
+                    #with open(f'output_image_{str(zufallszahl)}.png', 'wb') as f:
+                    #    f.write(image)
+                    await GeneratingImageMessage.delete()
+                    await ctx.send(f"Image Generating Done! :white_check_mark:")
+                    await ctx.send(status["Image"])
+                    #await ctx.send(file=discord.File(f'output_image_{str(zufallszahl)}.png'))
+                    #os.remove(f'output_image_{str(zufallszahl)}.png')  
+                    
+                    image_count += 1
+                    break
+                time.sleep(1)
+                timealr = timealr + 1
+                await GeneratingImageMessage.edit(content="Generating Image... :hourglass_flowing_sand: | "+str(timealr))
+            except:
+                print("Weird getting Status")
+                time.sleep(3)
+
+        
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 
 @bot.command()
 async def generate2(ctx, *, prompt):
@@ -154,7 +261,6 @@ def convert_to_formatfile(data):
         result += formatted_text
     return result
 
-
 @bot.command()
 async def ToText(ctx):
     try:
@@ -252,6 +358,6 @@ async def info(ctx):
 @bot.command()
 async def stats(ctx):
     global image_count, voice_count
-    await ctx.send(f"Images generated: {image_count}\nVoice files generated: {voice_count}\Text Messages generated: {text_count}")
+    await ctx.send(f"Images generated: {image_count}\nVoice files generated: {voice_count}\nText Messages generated: {text_count}")
 
 bot.run(os.environ.get("token"))
