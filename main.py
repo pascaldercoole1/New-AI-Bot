@@ -146,7 +146,16 @@ async def p(ctx, *, prompt):
                     #    f.write(image)
                     await GeneratingImageMessage.delete()
                     await ctx.send(f"Image Generating Done! :white_check_mark:")
-                    await ctx.send(status["Image"])
+                    response = requests.get(status["Image"])
+                    if response.status_code == 200:
+                        with open("pornimage.png", "wb") as f:
+                            f.write(response.content)
+                    else:
+                        print("Failed to download the image. Status code:", response.status_code)
+
+                    await ctx.send(file=discord.File(f'pornimage.png'))
+                    os.remove(f'pornimage.png')  
+
                     #await ctx.send(file=discord.File(f'output_image_{str(zufallszahl)}.png'))
                     #os.remove(f'output_image_{str(zufallszahl)}.png')  
                     
@@ -162,6 +171,7 @@ async def p(ctx, *, prompt):
         
     except Exception as e:
         print(f"An error occurred: {e}")
+
 
 
 @bot.command()
