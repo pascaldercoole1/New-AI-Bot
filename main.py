@@ -6,9 +6,11 @@ from keep_alive import keep_alive
 import random
 import time
 import datetime
+import openai
 
 image_count = 0
 voice_count = 0
+text_count = 0
 start_time = time.time()
 
 api_token = os.environ.get('api')
@@ -89,6 +91,71 @@ async def generate2(ctx, *, prompt):
         print(f"An error occurred: {e}")
 
 @bot.command()
+async def text(ctx, *, prompt):
+    global text_count
+    try:
+        GeneratingImageMessage = await ctx.send(f"Generating Text... :hourglass_flowing_sand:")
+        untere_grenze = 1
+        obere_grenze = 5000000000
+        zufallszahl = random.randint(untere_grenze, obere_grenze)
+
+        client = openai.OpenAI(
+            base_url="https://gemma-7b.lepton.run/api/v1/",
+            api_key=api_token
+        )
+
+        completion = client.chat.completions.create(
+            model="gemma-7b",
+            messages=[
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=100000,
+            stream=True,
+        )
+
+        currentex = ""
+
+        for chunk in completion:
+            if not chunk.choices:
+                continue
+            content = chunk.choices[0].delta.content
+            if content:
+                # print(content, end="")
+                currentex = currentex + str(content)
+
+        await GeneratingImageMessage.delete()
+        GeneratingImageMessage2 = await ctx.send(f"Text Generation Done! :white_check_mark:")
+        await ctx.send(currentex)
+        time.sleep(1)
+        await GeneratingImageMessage2.delete()
+        
+        text_count += 1
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def convert_to_format(data):
+    result = ""
+    for i, segment in enumerate(data):
+        text = segment['text']
+        start_time = segment['start']
+        end_time = segment['end']
+        formatted_text = f"[{start_time:.2f}-{end_time:.2f}]\n```{text}```\n"
+        result += formatted_text
+    return result
+
+def convert_to_formatfile(data):
+    result = ""
+    for i, segment in enumerate(data):
+        text = segment['text']
+        start_time = segment['start']
+        end_time = segment['end']
+        formatted_text = f"[{start_time:.2f}-{end_time:.2f}]\n{text}\n"
+        result += formatted_text
+    return result
+
+
+@bot.command()
 async def ToText(ctx):
     try:
         if ctx.message.attachments:  
@@ -100,18 +167,38 @@ async def ToText(ctx):
             result=ToTextCLIENT.run(
                 input=file_url
             )
+            #print("result:",result, convert_to_format(result))
+            Final = convert_to_format(result) # result[0]["text"]
+            print("FI:",Final)
+            if len(Final) > 2000:
+                print("MEHR ALS 2k")
+                untere_grenze = 1
+                obere_grenze = 5000000000
+                zufallszahl = random.randint(untere_grenze, obere_grenze)
 
-            Final = result[0]["text"]
-            print("OK",Final)
-            await GeneratingTextMessage.delete()
-            await ctx.send(f"Text Generating Done! :white_check_mark:")
-            await ctx.send(f"Your Responce:```{Final}```")
+                Final = convert_to_formatfile(result)
+
+                print("YO",zufallszahl)
+                with open(f'output_text_{str(zufallszahl)}.txt', 'wb') as f:
+                    f.write(Final.encode())
+
+                
+                await GeneratingTextMessage.delete()
+                await ctx.send(f"Text Generating Done! :white_check_mark:")
+                await ctx.send(file=discord.File(f'output_text_{str(zufallszahl)}.txt'))
+
+                os.remove(f'output_text_{str(zufallszahl)}.txt')  
+            else:
+                print("OK",Final)
+                await GeneratingTextMessage.delete()
+                await ctx.send(f"Text Generating Done! :white_check_mark:")
+                await ctx.send(f"Your Responce:```{Final}")
             #else:
             #    await ctx.send("Please upload a MP3 File.")
         else:
             await ctx.send("I dont see your File...?")
-    except:
-        print("ERROR")
+    except Exception as e:
+        print("ERROR", e)
 
 
 
@@ -165,6 +252,6 @@ async def info(ctx):
 @bot.command()
 async def stats(ctx):
     global image_count, voice_count
-    await ctx.send(f"Images generated: {image_count}\nVoice files generated: {voice_count}")
+    await ctx.send(f"Images generated: {image_count}\nVoice files generated: {voice_count}\Text Messages generated: {text_count}")
 
 bot.run(os.environ.get("token"))
