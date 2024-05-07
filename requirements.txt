@@ -3,3 +3,4 @@ leptonai
 requests
 flask
 openai
+asyncio
